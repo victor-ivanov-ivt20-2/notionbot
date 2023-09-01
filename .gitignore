@@ -1,0 +1,12 @@
+# env files
+
+/local.env
+/config/local.yml
+
+# базка данных
+
+/storage/storage.sqlite
+
+# для всех пока в бане
+
+/internal/tgbot
