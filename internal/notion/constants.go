@@ -112,19 +112,32 @@ func GetWeekDays() map[string]int {
 	WeekDays["Суббота"] = 5
 	return WeekDays
 }
-func GetEvenOdd() map[string]int {
-	var EvenOdd = make(map[string]int)
+func GetEvenOdd() map[string]string {
+	var EvenOdd = make(map[string]string)
 
-	EvenOdd["чётное/нечётное"] = 0
-	EvenOdd["нечётное"] = 1
-	EvenOdd["чётное"] = 2
+	EvenOdd["чётное/нечётное"] = ""
+	EvenOdd["нечётное"] = "*"
+	EvenOdd["чётное"] = "**"
 	return EvenOdd
 }
-func GetLessonType() map[string]int {
-	var LessonType = make(map[string]int)
+func GetLessonType() map[string]string {
+	var LessonType = make(map[string]string)
 
-	LessonType["лекция"] = 0
-	LessonType["лабораторная"] = 1
-	LessonType["практика"] = 2
+	LessonType["лекция"] = "лек"
+	LessonType["лабораторная"] = "лаб"
+	LessonType["практика"] = "пр"
 	return LessonType
+}
+
+func GetLessonTime() map[int]string {
+	var LessonTime = make(map[int]string)
+
+	LessonTime[1] = "08:00 - 09:35"
+	LessonTime[2] = "09:50 - 11:25"
+	LessonTime[3] = "11:40 - 13:15"
+	LessonTime[4] = "14:00 - 15:35"
+	LessonTime[5] = "15:50 - 17:25"
+	LessonTime[6] = "17:40 - 19:15"
+
+	return LessonTime
 }

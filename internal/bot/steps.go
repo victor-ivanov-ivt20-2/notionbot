@@ -17,9 +17,10 @@ const (
 )
 
 var workingKeyboard = tgbotapi.NewReplyKeyboard(
-  tgbotapi.NewKeyboardButtonRow(
-    tgbotapi.NewKeyboardButton("Обновить расписание"),
-  ),
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("Обновить расписание"),
+		tgbotapi.NewKeyboardButton("Расписание на завтра"),
+	),
 )
 
 func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageConfig, error) {
@@ -29,9 +30,9 @@ func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageC
 	if err != nil {
 		return tgbotapi.MessageConfig{}, err
 	}
-  if client.CurrentStep != WORKING {
-    msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-  }
+	if client.CurrentStep != WORKING {
+		msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+	}
 	switch client.CurrentStep {
 	case WELCOME:
 		msg = tgbotapi.NewMessage(chatId, "Это пока всё что может этот бот :c")
@@ -46,30 +47,39 @@ func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageC
 			msg = tgbotapi.NewMessage(chatId, "Это пока всё что может этот бот :c")
 		}
 	case SET_PERSON:
-		if message == env.First.Email {
-			msg = tgbotapi.NewMessage(chatId, "Поздравляю!")
-			client.NotionClient.TasksId = env.TasksId
-			client.NotionClient.ScheduleId = env.ScheduleId
-			client.NotionClient.Email = env.First.Email
-			client.NotionClient.PageId = env.First.PageId
-			client.NotionClient.UserId = env.First.UserId
-			SetStep(chatId, client, WORKING)
-		} else if message == env.Second.Email {
-			msg = tgbotapi.NewMessage(chatId, "Поздравляю!")
-			client.NotionClient.TasksId = env.TasksId
-			client.NotionClient.ScheduleId = env.ScheduleId
-			client.NotionClient.Email = env.Second.Email
-			client.NotionClient.PageId = env.Second.PageId
-			client.NotionClient.UserId = env.Second.UserId
-			SetStep(chatId, client, WORKING)
-		} else {
+		if message != env.First.Email && message != env.Second.Email {
 			msg = tgbotapi.NewMessage(chatId, "Повторяй")
+		} else {
+			client.NotionClient.TasksId = env.TasksId
+			client.NotionClient.ScheduleId = env.ScheduleId
+			if message == env.First.Email {
+				client.NotionClient.Email = env.First.Email
+				client.NotionClient.PageId = env.First.PageId
+				client.NotionClient.UserId = env.First.UserId
+			} else if message == env.Second.Email {
+				client.NotionClient.Email = env.Second.Email
+				client.NotionClient.PageId = env.Second.PageId
+				client.NotionClient.UserId = env.Second.UserId
+			}
+			msg = tgbotapi.NewMessage(chatId, "Поздравляю!")
+			msg.ReplyMarkup = workingKeyboard
+			SetStep(chatId, client, WORKING)
 		}
+
 	case WORKING:
-		msg = tgbotapi.NewMessage(chatId, "Ты теперь работаешь...")
-    msg.ReplyMarkup = workingKeyboard
-		if err := notion.UpdateSchedule(client.NotionClient); err != nil {
-			return tgbotapi.MessageConfig{}, err
+
+		switch message {
+		case "Обновить расписание":
+			if err := notion.UpdateSchedule(client.NotionClient); err != nil {
+				return tgbotapi.MessageConfig{}, err
+			}
+			msg = tgbotapi.NewMessage(chatId, "Расписание на вашей странице было обновлено!")
+		case "Расписание на завтра":
+			answer, err := notion.GetScheduleTommorow(client.NotionClient)
+			if err != nil {
+				return tgbotapi.MessageConfig{}, err
+			}
+			msg = tgbotapi.NewMessage(chatId, answer)
 		}
 	}
 

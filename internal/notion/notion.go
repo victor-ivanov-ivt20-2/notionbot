@@ -13,9 +13,18 @@ type NotionClient struct {
 	Email      string
 }
 
+var WeekDays = GetWeekDays()
+var EvenOdd = GetEvenOdd()
+var LessonType = GetLessonType()
+var LessonTime = GetLessonTime()
+
 func SetClient(token notionapi.Token) *notionapi.Client {
 	client := notionapi.NewClient(token)
 	return client
+}
+
+func RefreshSchedule() {
+
 }
 
 // func CreateBlock(notion *notionapi.Client, pageId string, text string) (*notionapi.AppendBlockChildrenResponse, error) {

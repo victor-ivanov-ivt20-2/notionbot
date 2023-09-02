@@ -6,23 +6,9 @@ import (
 	"github.com/jomei/notionapi"
 )
 
-func GetScheduleItems(notion *notionapi.Client, scheduleId string, userId string, index int) (*notionapi.DatabaseQueryResponse, error) {
-	floatIndex := float64(index)
+func GetScheduleItems(notion *notionapi.Client, scheduleId string, userId string, Filter notionapi.Filter) (*notionapi.DatabaseQueryResponse, error) {
 	databaseItems, err := notion.Database.Query(context.Background(), notionapi.DatabaseID(scheduleId), &notionapi.DatabaseQueryRequest{
-		Filter: notionapi.AndCompoundFilter{
-			notionapi.PropertyFilter{
-				Property: "Person",
-				People: &notionapi.PeopleFilterCondition{
-					Contains: userId,
-				},
-			},
-			notionapi.PropertyFilter{
-				Property: "StartTime",
-				Number: &notionapi.NumberFilterCondition{
-					Equals: &floatIndex,
-				},
-			},
-		},
+		Filter: Filter,
 	})
 
 	if err != nil {

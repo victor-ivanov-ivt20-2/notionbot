@@ -7,22 +7,24 @@ import (
 	"github.com/jomei/notionapi"
 )
 
-func GetSchedule(client NotionClient) (*notionapi.TableBlock, error) {
+func GetScheduleTable(client NotionClient) (*notionapi.TableBlock, error) {
 	schedule, err := client.Notion.Block.GetChildren(context.Background(), notionapi.BlockID(client.PageId), &notionapi.Pagination{StartCursor: notionapi.Cursor(""), PageSize: 10})
 
 	if err != nil {
 		return nil, err
 	}
+
 	for _, v := range schedule.Results {
 		if q, ok := v.(*notionapi.TableBlock); ok {
 			return q, nil
 		}
 	}
+
 	return nil, errors.New("table not found")
 }
 
 func UpdateSchedule(client NotionClient) error {
-	schedule, err := GetSchedule(client)
+	schedule, err := GetScheduleTable(client)
 
 	if err != nil {
 		return err
@@ -38,7 +40,7 @@ func UpdateSchedule(client NotionClient) error {
 
 	for index, c := range scheduleRows.Results {
 		if q, ok := c.(*notionapi.TableRowBlock); ok {
-			SubjectRow, err := GetSubjectsToTableRow(index, client)
+			SubjectRow, err := SetSubjectsToTableRow(index, client)
 
 			if err != nil {
 				return err
@@ -66,82 +68,53 @@ func GetUpdatedTableRow(index int, subjects notionapi.TableRow) *notionapi.Table
 	}
 }
 
-func GetSubjectsToTableRow(index int, client NotionClient) (notionapi.TableRow, error) {
-
-	items, err := GetScheduleItems(client.Notion, client.ScheduleId, client.UserId, index)
+func SetSubjectsToTableRow(index int, client NotionClient) (notionapi.TableRow, error) {
+	floatIndex := float64(index)
+	items, err := GetScheduleItems(client.Notion, client.ScheduleId, client.UserId, notionapi.AndCompoundFilter{
+		notionapi.PropertyFilter{
+			Property: "Person",
+			People: &notionapi.PeopleFilterCondition{
+				Contains: client.UserId,
+			},
+		},
+		notionapi.PropertyFilter{
+			Property: "StartTime",
+			Number: &notionapi.NumberFilterCondition{
+				Equals: &floatIndex,
+			},
+		},
+	})
 
 	if err != nil {
 		return notionapi.TableRow{}, err
 	}
 
-	scheduleRowCells := [][]notionapi.RichText{
-		{
-			{
-				Text: &notionapi.Text{
-					Content: "",
-				},
-			},
-		},
-		{
-			{
-				Text: &notionapi.Text{
-					Content: "",
-				},
-			},
-		},
-		{
-			{
-				Text: &notionapi.Text{
-					Content: "",
-				},
-			},
-		},
-		{
-			{
-				Text: &notionapi.Text{
-					Content: "",
-				},
-			},
-		},
-		{
-			{
-				Text: &notionapi.Text{
-					Content: "",
-				},
-			},
-		},
-		{
-			{
-				Text: &notionapi.Text{
-					Content: "",
-				},
-			},
-		},
+	var scheduleRowCells [][]notionapi.RichText
+	for i := 0; i < 6; i++ {
+		var item = []notionapi.RichText{}
+		scheduleRowCells = append(scheduleRowCells, item)
 	}
 
-	WeekDays := GetWeekDays()
-	EvenOdd := GetEvenOdd()
-	LessonType := GetLessonType()
-
 	for _, v := range items.Results {
-		var title string
-		var room string
-		lessonType := -1
-		evenodd := -1
+		var title = "-1"
+		var room = "-1"
+		var lessonType = "-1"
+		var evenodd = "-1"
+		var url = v.URL
 		weekDay := -1
+
 		for _, f := range v.Properties {
 			if t, ok := f.(*notionapi.TitleProperty); ok {
 				title = t.Title[0].Text.Content
 			}
 			if q, ok := f.(*notionapi.SelectProperty); ok {
-				d, okd := WeekDays[q.Select.Name]
-				e, oke := EvenOdd[q.Select.Name]
-				l, okl := LessonType[q.Select.Name]
-				if okd {
+				if d, okd := WeekDays[q.Select.Name]; okd {
 					weekDay = d
-				} else if oke {
+				}
+				if e, okd := EvenOdd[q.Select.Name]; okd {
 					evenodd = e
-				} else if okl {
+				}
+				if l, okd := LessonType[q.Select.Name]; okd {
 					lessonType = l
 				}
 			}
@@ -150,25 +123,53 @@ func GetSubjectsToTableRow(index int, client NotionClient) (notionapi.TableRow, 
 			}
 		}
 
-		if len(title) != 0 && weekDay != -1 && evenodd != -1 && lessonType != -1 && len(room) != 0 {
-			row := scheduleRowCells[weekDay][0]
-			var eo = ""
-			var lt = ""
-			if evenodd == 1 {
-				eo = "*"
-			} else if evenodd == 2 {
-				eo = "**"
+		if weekDay != -1 && title != "-1" && evenodd != "-1" && lessonType != "-1" && room != "-1" {
+			titleText := notionapi.RichText{
+				Text: &notionapi.Text{
+					Content: title,
+					// TODO: Создать базу данных настоящих пар, куда эти ссылки и должны будут вести.
+					// Вероятнее всего брать ссылку будут из properties
+					Link: &notionapi.Link{
+						Url: url,
+					},
+				},
+				PlainText: title,
+				Href:      url,
 			}
-			if lessonType == 0 {
-				lt = "лек"
-			} else if lessonType == 1 {
-				lt = "лаб"
-			} else if lessonType == 2 {
-				lt = "пр"
+			evenoddText := notionapi.RichText{
+				Text: &notionapi.Text{
+					Content: evenodd + " ",
+				},
+				PlainText: evenodd + " ",
 			}
-
-			row.Text.Content = row.Text.Content + title + eo + " " + room + "[" + lt + "] "
-			scheduleRowCells[weekDay][0] = row
+			roomText := notionapi.RichText{
+				Text: &notionapi.Text{
+					Content: room + " ",
+				},
+				PlainText: room + " ",
+			}
+			lessonTypeText := notionapi.RichText{
+				Text: &notionapi.Text{
+					Content: "[" + lessonType + "]\n",
+				},
+				PlainText: "[" + lessonType + "]",
+			}
+			var color notionapi.Color
+			switch lessonType {
+			case "лаб":
+				color = notionapi.ColorBlueBackground
+			case "лек":
+				color = notionapi.ColorGreenBackground
+			case "пр":
+				color = notionapi.ColorRedBackground
+			}
+			lessonTypeText.Annotations = &notionapi.Annotations{
+				Color: color,
+			}
+			scheduleRowCells[weekDay] = append(scheduleRowCells[weekDay], titleText)
+			scheduleRowCells[weekDay] = append(scheduleRowCells[weekDay], evenoddText)
+			scheduleRowCells[weekDay] = append(scheduleRowCells[weekDay], roomText)
+			scheduleRowCells[weekDay] = append(scheduleRowCells[weekDay], lessonTypeText)
 		}
 	}
 

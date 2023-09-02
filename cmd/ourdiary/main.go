@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/bot"
 	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/config"
@@ -15,6 +17,15 @@ const (
 	envDev   = "dev"
 	envProd  = "prod"
 )
+
+func init() {
+	loc, err := time.LoadLocation("Asia/Yakutsk")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	time.Local = loc
+}
 
 func main() {
 	cfg := config.MustLoad()
