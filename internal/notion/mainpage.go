@@ -83,7 +83,7 @@ func SetSubjectsToTableRow(index int, client NotionClient) (notionapi.TableRow, 
 				Equals: &floatIndex,
 			},
 		},
-	})
+	}, []notionapi.SortObject{})
 
 	if err != nil {
 		return notionapi.TableRow{}, err

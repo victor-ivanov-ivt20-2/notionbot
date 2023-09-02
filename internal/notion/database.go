@@ -6,9 +6,10 @@ import (
 	"github.com/jomei/notionapi"
 )
 
-func GetScheduleItems(notion *notionapi.Client, scheduleId string, userId string, Filter notionapi.Filter) (*notionapi.DatabaseQueryResponse, error) {
+func GetScheduleItems(notion *notionapi.Client, scheduleId string, userId string, Filter notionapi.Filter, Sorts []notionapi.SortObject) (*notionapi.DatabaseQueryResponse, error) {
 	databaseItems, err := notion.Database.Query(context.Background(), notionapi.DatabaseID(scheduleId), &notionapi.DatabaseQueryRequest{
 		Filter: Filter,
+		Sorts:  Sorts,
 	})
 
 	if err != nil {

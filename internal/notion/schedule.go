@@ -7,9 +7,9 @@ import (
 	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/lib/gocron"
 )
 
-func GetScheduleTommorow(client NotionClient) (string, error) {
+func GetScheduleTomorrow(client NotionClient) (string, error) {
 
-	tommorow := gocron.GetNextWeekDay()
+	tomorrow := gocron.GetNextWeekDay()
 	var evenodd string
 	if gocron.GetEvenOddWeek(time.Now().AddDate(0, 0, 1)) {
 		evenodd = "нечётное"
@@ -20,7 +20,7 @@ func GetScheduleTommorow(client NotionClient) (string, error) {
 		notionapi.PropertyFilter{
 			Property: "StartDay",
 			Select: &notionapi.SelectFilterCondition{
-				Equals: tommorow,
+				Equals: tomorrow,
 			},
 		},
 		notionapi.PropertyFilter{
@@ -34,6 +34,12 @@ func GetScheduleTommorow(client NotionClient) (string, error) {
 			People: &notionapi.PeopleFilterCondition{
 				Contains: client.UserId,
 			},
+		},
+	}, []notionapi.SortObject{
+		{
+			Property:  "StartTime",
+			Direction: "ascending",
+			Timestamp: "1",
 		},
 	})
 

@@ -75,7 +75,7 @@ func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageC
 			}
 			msg = tgbotapi.NewMessage(chatId, "Расписание на вашей странице было обновлено!")
 		case "Расписание на завтра":
-			answer, err := notion.GetScheduleTommorow(client.NotionClient)
+			answer, err := notion.GetScheduleTomorrow(client.NotionClient)
 			if err != nil {
 				return tgbotapi.MessageConfig{}, err
 			}
