@@ -16,6 +16,12 @@ const (
 	WORKING    Step = "working"
 )
 
+var workingKeyboard = tgbotapi.NewReplyKeyboard(
+  tgbotapi.NewKeyboardButtonRow(
+    tgbotapi.NewKeyboardButton("Обновить расписание"),
+  ),
+)
+
 func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageConfig, error) {
 	var msg tgbotapi.MessageConfig
 	client, err := GetClient(chatId)
@@ -23,7 +29,9 @@ func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageC
 	if err != nil {
 		return tgbotapi.MessageConfig{}, err
 	}
-
+  if client.CurrentStep != WORKING {
+    msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+  }
 	switch client.CurrentStep {
 	case WELCOME:
 		msg = tgbotapi.NewMessage(chatId, "Это пока всё что может этот бот :c")
@@ -59,6 +67,7 @@ func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageC
 		}
 	case WORKING:
 		msg = tgbotapi.NewMessage(chatId, "Ты теперь работаешь...")
+    msg.ReplyMarkup = workingKeyboard
 		if err := notion.UpdateSchedule(client.NotionClient); err != nil {
 			return tgbotapi.MessageConfig{}, err
 		}

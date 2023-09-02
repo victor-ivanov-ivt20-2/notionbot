@@ -6,7 +6,7 @@ ADD go.mod .
 
 COPY . .
 
-RUN go build -o our-diary our-diary.go
+RUN GOARCH=amd64 GOOS=linux go build -o our-diary cmd/ourdiary/main.go
 
 FROM alpine
 
