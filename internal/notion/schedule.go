@@ -11,27 +11,74 @@ import (
 type SchedulerTask func(string, string, string) error
 
 func GetAllSchedule(client NotionClient) (string, error) {
-  
-  items, err := GetScheduleItems(client.Notion, client.ScheduleId, client.UserId, notionapi.PropertyFilter{
-    Property: "Person",
-    People: &PeopleFilterCondition{
-      Contains: client.UserId 
-    }
-  }, []notionapi.SortObject{})
 
-  for _, v := range items.Results {
-    var title string
-    var evenodd string
-    var lessonTime string
-    var room string
-    var lessonType string
-    var weekDay = -1
-    for _, p := range v.Properties {
-      if t, ok := p.(*notionapi.TitleProperty); ok {
-        
-      }
-    }
-  }
+	items, err := GetScheduleItems(client.Notion, client.ScheduleId, client.UserId, notionapi.PropertyFilter{
+		Property: "Person",
+		People: &notionapi.PeopleFilterCondition{
+			Contains: client.UserId,
+		},
+	}, []notionapi.SortObject{
+		{
+			Property:  "StartDay",
+			Direction: "ascending",
+			Timestamp: "1",
+		},
+		{
+			Property:  "StartTime",
+			Direction: "ascending",
+			Timestamp: "1",
+		},
+	})
+
+	if err != nil {
+		return "", nil
+	}
+
+	var answer string
+	var weekday = -1
+	for _, v := range items.Results {
+		var title = "-1"
+		var evenodd = "-1"
+		var lessonTime = "-1"
+		var room = "-1"
+		var lessonType = "-1"
+		var weekDay = -1
+		var weekDayString string
+		for _, p := range v.Properties {
+			if t, ok := p.(*notionapi.TitleProperty); ok {
+				title = t.Title[0].Text.Content
+			}
+			if n, ok := p.(*notionapi.NumberProperty); ok {
+				lessonTime = LessonTime[int(n.Number)]
+			}
+			if q, ok := p.(*notionapi.SelectProperty); ok {
+				if d, okd := WeekDays[q.Select.Name]; okd {
+					weekDay = d
+					weekDayString = q.Select.Name
+				}
+				if e, okd := EvenOdd[q.Select.Name]; okd {
+					evenodd = e
+				}
+				if l, okd := LessonType[q.Select.Name]; okd {
+					lessonType = l
+				}
+			}
+			if q, ok := p.(*notionapi.RichTextProperty); ok {
+				room = q.RichText[0].Text.Content
+			}
+		}
+
+		if weekDay != weekday {
+			answer = answer + "\n" + weekDayString + "\n"
+			weekday = weekDay
+		}
+
+		if title != "-1" && evenodd != "-1" && lessonTime != "-1" && room != "-1" && lessonType != "-1" && weekDay != -1 {
+			total := lessonTime + " : " + title + " " + evenodd + " " + room + " [" + lessonType + "] " + "\n"
+			answer += total
+		}
+	}
+	return answer, nil
 }
 
 func GetScheduleForDay(client NotionClient, t time.Time) (string, error) {

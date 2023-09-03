@@ -23,9 +23,9 @@ var workingKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Обновить расписание"),
 	),
-  tgbotapi.NewKeyboardButtonRow(
-    tgbotapi.NewKeyboardButton("Всё расписание"),
-  ),
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("Всё расписание"),
+	),
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Расписание на завтра"),
 		tgbotapi.NewKeyboardButton("Расписание на сегодня"),
@@ -33,7 +33,7 @@ var workingKeyboard = tgbotapi.NewReplyKeyboard(
 )
 
 func Steps(chatId int64, bot *tgbotapi.BotAPI, scheduler *gocron.Scheduler, message string, env config.OurDiary) (tgbotapi.MessageConfig, error) {
-  var msg tgbotapi.MessageConfig
+	var msg tgbotapi.MessageConfig
 	client, err := GetClient(chatId)
 
 	if err != nil {
@@ -91,12 +91,12 @@ func Steps(chatId int64, bot *tgbotapi.BotAPI, scheduler *gocron.Scheduler, mess
 				return tgbotapi.MessageConfig{}, err
 			}
 			msg = tgbotapi.NewMessage(chatId, "Расписание на вашей странице было обновлено!")
-    case "Всё расписание":
-      answer, err := notion.GetAllSchedule(client.NotionClient)
-      if err != nil {
-        return tgbotapi.MessageConfig{}, err
-      }
-      msg = tgbotapi.NewMessage(chatId, answer)
+		case "Всё расписание":
+			answer, err := notion.GetAllSchedule(client.NotionClient)
+			if err != nil {
+				return tgbotapi.MessageConfig{}, err
+			}
+			msg = tgbotapi.NewMessage(chatId, answer)
 		case "Расписание на завтра":
 			answer, err := notion.GetScheduleForDay(client.NotionClient, time.Now().AddDate(0, 0, 1))
 			if err != nil {
@@ -114,9 +114,9 @@ func Steps(chatId int64, bot *tgbotapi.BotAPI, scheduler *gocron.Scheduler, mess
 			// 		return tgbotapi.MessageConfig{}, err
 			// 	}
 			// 	msg = tgbotapi.NewMessage(chatId, "Уведомления активны")
-    default:
-      msg = tgbotapi.NewMessage(chatId, "Выберите из 3 вариантов!")
-    }
+		default:
+			msg = tgbotapi.NewMessage(chatId, "Выберите из 3 вариантов!")
+		}
 	}
 	return msg, nil
 
