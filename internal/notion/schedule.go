@@ -35,6 +35,13 @@ func GetAllSchedule(client NotionClient) (string, error) {
 	}
 
 	var answer string
+
+	if scheduler.GetEvenOddWeek(time.Now()) {
+		answer = "чётная неделя\n"
+	} else {
+		answer = "нечётная неделя\n"
+	}
+
 	var weekday = -1
 	for _, v := range items.Results {
 		var title = "-1"
