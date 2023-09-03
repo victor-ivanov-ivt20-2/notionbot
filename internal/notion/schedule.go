@@ -10,6 +10,30 @@ import (
 
 type SchedulerTask func(string, string, string) error
 
+func GetAllSchedule(client NotionClient) (string, error) {
+  
+  items, err := GetScheduleItems(client.Notion, client.ScheduleId, client.UserId, notionapi.PropertyFilter{
+    Property: "Person",
+    People: &PeopleFilterCondition{
+      Contains: client.UserId 
+    }
+  }, []notionapi.SortObject{})
+
+  for _, v := range items.Results {
+    var title string
+    var evenodd string
+    var lessonTime string
+    var room string
+    var lessonType string
+    var weekDay = -1
+    for _, p := range v.Properties {
+      if t, ok := p.(*notionapi.TitleProperty); ok {
+        
+      }
+    }
+  }
+}
+
 func GetScheduleForDay(client NotionClient, t time.Time) (string, error) {
 	tomorrow := scheduler.GetNextWeekDay(t)
 	if tomorrow == "Воскресенье" {
