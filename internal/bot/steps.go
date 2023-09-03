@@ -1,6 +1,9 @@
 package bot
 
 import (
+	"time"
+
+	"github.com/go-co-op/gocron"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jomei/notionapi"
 	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/config"
@@ -19,11 +22,14 @@ const (
 var workingKeyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Обновить расписание"),
+	),
+	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Расписание на завтра"),
+		tgbotapi.NewKeyboardButton("Расписание на сегодня"),
 	),
 )
 
-func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageConfig, error) {
+func Steps(chatId int64, bot *tgbotapi.BotAPI, scheduler *gocron.Scheduler, message string, env config.OurDiary) (tgbotapi.MessageConfig, error) {
 	var msg tgbotapi.MessageConfig
 	client, err := GetClient(chatId)
 
@@ -68,6 +74,14 @@ func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageC
 
 	case WORKING:
 
+		// schedulerTask := func(title string, lessonStartTime string, room string) error {
+		// 	schedulerMessage := tgbotapi.NewMessage(chatId, title+" начнётся в "+lessonStartTime+" в "+room)
+		// 	if err := SendToUser(bot, schedulerMessage); err != nil {
+		// 		return err
+		// 	}
+		// 	return nil
+		// }
+
 		switch message {
 		case "Обновить расписание":
 			if err := notion.UpdateSchedule(client.NotionClient); err != nil {
@@ -75,15 +89,26 @@ func Steps(chatId int64, message string, env config.OurDiary) (tgbotapi.MessageC
 			}
 			msg = tgbotapi.NewMessage(chatId, "Расписание на вашей странице было обновлено!")
 		case "Расписание на завтра":
-			answer, err := notion.GetScheduleTomorrow(client.NotionClient)
+			answer, err := notion.GetScheduleForDay(client.NotionClient, time.Now().AddDate(0, 0, 1))
 			if err != nil {
 				return tgbotapi.MessageConfig{}, err
 			}
 			msg = tgbotapi.NewMessage(chatId, answer)
+		case "Расписание на сегодня":
+			answer, err := notion.GetScheduleForDay(client.NotionClient, time.Now())
+			if err != nil {
+				return tgbotapi.MessageConfig{}, err
+			}
+			msg = tgbotapi.NewMessage(chatId, answer)
+			// case "Уведомлять о предстоящих занятиях":
+			// 	if err := notion.SetScheduleNotifications(client.NotionClient, scheduler, schedulerTask); err != nil {
+			// 		return tgbotapi.MessageConfig{}, err
+			// 	}
+			// 	msg = tgbotapi.NewMessage(chatId, "Уведомления активны")
 		}
 	}
-
 	return msg, nil
+
 }
 
 func SetStep(chatId int64, client NotionClientWithSteps, step Step) {

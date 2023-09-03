@@ -1,4 +1,4 @@
-package gocron
+package scheduler
 
 // 1
 import (
@@ -10,7 +10,7 @@ import (
 
 var s *gocron.Scheduler
 
-func GetNextWeekDay() string {
+func GetNextWeekDay(t time.Time) string {
 
 	weekDay := make(map[time.Weekday]string)
 
@@ -22,7 +22,7 @@ func GetNextWeekDay() string {
 	weekDay[time.Saturday] = "Суббота"
 	weekDay[time.Sunday] = "Воскресенье"
 
-	return weekDay[time.Now().AddDate(0, 0, 1).Weekday()]
+	return weekDay[t.Weekday()]
 }
 
 func GetEvenOddWeek(t time.Time) bool {
