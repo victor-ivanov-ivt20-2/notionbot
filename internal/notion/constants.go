@@ -141,3 +141,12 @@ func GetLessonTime() map[int]string {
 
 	return LessonTime
 }
+
+// func getKeyFromWeekDay(m map[string]int, value int) string {
+// 	for k, v := range m {
+// 		if v == value {
+// 			return k
+// 		}
+// 	}
+// 	return ""
+// }

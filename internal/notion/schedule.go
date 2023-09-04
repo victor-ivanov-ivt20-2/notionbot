@@ -129,6 +129,9 @@ func GetScheduleForDay(client NotionClient, t time.Time) (string, error) {
 	}
 
 	var answer string
+
+	answer = tomorrow + "\n\n"
+
 	for _, v := range items.Results {
 		var total string
 		var title string
@@ -147,6 +150,9 @@ func GetScheduleForDay(client NotionClient, t time.Time) (string, error) {
 		}
 		total = LessonTime[number] + " : " + title + " " + room + "\n"
 		answer += total
+	}
+	if answer == (tomorrow + "\n\n") {
+		answer += "Пар сегодня нет"
 	}
 	return answer, nil
 }
@@ -225,19 +231,18 @@ func SetScheduleNotifications(client NotionClient) ([][]string, error) {
 		}
 
 		if len(response[weekDay]) == 0 {
-			response[weekDay] = append(response[weekDay], lessonTimeStart)
-			response[weekDay] = append(response[weekDay], title+" начнётся в "+lessonTimeStart+checkRoom(room))
+			lts, err := AddMinutes(lessonTimeStart)
+			if err != nil {
+				lts = lessonTimeStart
+			}
+			response[weekDay] = append(response[weekDay], lts)
+			response[weekDay] = append(response[weekDay], title+" начнётся в "+lessonTimeStart+" "+checkRoom(room))
 			response[weekDay] = append(response[weekDay], lessonTimeEnd)
 		} else {
-			response[weekDay] = append(response[weekDay], "Следующая пара "+title+" начнётся в "+lessonTimeStart+checkRoom(room))
+			response[weekDay] = append(response[weekDay], "Следующая пара "+title+" начнётся в "+lessonTimeStart+" "+checkRoom(room))
 			response[weekDay] = append(response[weekDay], lessonTimeEnd)
 		}
 	}
-	// switch weekDay {
-	// case 0:
-	// _, errStart := scheduler.Every(1).Monday().At(lessonTimeStart).Do(schedulerTask, title, lessonTimeStart, room)
-	// _, errEnd := scheduler.Every(1).Monday().At(lessonTimeEnd).Do(schedulerTask, title, lessonTimeEnd, room)
-	// }
 
 	return response, nil
 }

@@ -1,6 +1,7 @@
 package notion
 
 import (
+	"strconv"
 	"unicode"
 
 	"github.com/jomei/notionapi"
@@ -32,7 +33,7 @@ func RefreshSchedule() {
 func checkRoom(str string) string {
 	for _, ch := range str {
 		if unicode.IsDigit(ch) {
-			return " в " + str + " кабинете"
+			return "в " + str + " кабинете"
 		}
 	}
 	return str
@@ -60,6 +61,35 @@ func CheckAllProperties(withoutValue bool, args ...interface{}) bool {
 		}
 	}
 	return true
+
+}
+
+func AddMinutes(hm string) (string, error) {
+	h, err := strconv.Atoi(hm[0:2])
+	if err != nil {
+		return "", err
+	}
+	m, err := strconv.Atoi(hm[3:5])
+	if err != nil {
+		return "", err
+	}
+
+	ms := m - 45
+	if ms < 0 {
+		h -= 1
+		ms += 60
+	}
+
+	hours := strconv.Itoa(h)
+	minutes := strconv.Itoa(ms)
+	if h < 10 {
+		hours = "0" + strconv.Itoa(h)
+	}
+	if ms < 10 {
+		minutes = "0" + strconv.Itoa(ms)
+	}
+
+	return hours + ":" + minutes, nil
 
 }
 
