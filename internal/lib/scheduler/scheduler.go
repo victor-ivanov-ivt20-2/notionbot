@@ -28,12 +28,18 @@ func GetNextWeekDay(t time.Time) string {
 func GetEvenOddWeek(t time.Time) bool {
 	_, startWeek := time.Date(2023, 9, 1, 0, 0, 0, 0, time.UTC).ISOWeek()
 	_, nowWeek := t.ISOWeek()
-	fmt.Println(t)
 	return (nowWeek-startWeek)%2 != 0
 }
 
 func CreateSchedule() *gocron.Scheduler {
-	s = gocron.NewScheduler(time.UTC)
+	loc, err := time.LoadLocation("Asia/Yakutsk")
+	if err != nil {
+		fmt.Println(err)
+		s = gocron.NewScheduler(time.UTC)
+	} else {
+		time.Local = loc
+		s = gocron.NewScheduler(loc)
+	}
 	return s
 }
 

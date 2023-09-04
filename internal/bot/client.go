@@ -3,11 +3,13 @@ package bot
 import (
 	"errors"
 
+	"github.com/go-co-op/gocron"
 	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/notion"
 )
 
 type NotionClientWithSteps struct {
 	CurrentStep  Step
+	Scheduler    *gocron.Scheduler
 	NotionClient notion.NotionClient
 }
 

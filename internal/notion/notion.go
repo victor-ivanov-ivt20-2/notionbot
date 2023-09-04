@@ -1,6 +1,8 @@
 package notion
 
 import (
+	"unicode"
+
 	"github.com/jomei/notionapi"
 )
 
@@ -24,6 +26,40 @@ func SetClient(token notionapi.Token) *notionapi.Client {
 }
 
 func RefreshSchedule() {
+
+}
+
+func checkRoom(str string) string {
+	for _, ch := range str {
+		if unicode.IsDigit(ch) {
+			return " в " + str + " кабинете"
+		}
+	}
+	return str
+}
+
+func CheckAllProperties(withoutValue bool, args ...interface{}) bool {
+
+	for _, v := range args {
+		switch t := v.(type) {
+		case string:
+			if withoutValue {
+				if len(t) == 0 {
+					return false
+				}
+			} else {
+				if t == "-1" {
+					return false
+				}
+			}
+
+		case int:
+			if t == -1 {
+				return false
+			}
+		}
+	}
+	return true
 
 }
 

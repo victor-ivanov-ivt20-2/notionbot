@@ -3,10 +3,10 @@ package bot
 import (
 	"time"
 
-	"github.com/go-co-op/gocron"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jomei/notionapi"
 	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/config"
+	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/lib/scheduler"
 	"github.com/victor-ivanov-ivt20-2/ourdiary/internal/notion"
 )
 
@@ -24,6 +24,9 @@ var workingKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButton("Обновить расписание"),
 	),
 	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("Уведомлять о предстоящих занятиях"),
+	),
+	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Всё расписание"),
 	),
 	tgbotapi.NewKeyboardButtonRow(
@@ -32,7 +35,7 @@ var workingKeyboard = tgbotapi.NewReplyKeyboard(
 	),
 )
 
-func Steps(chatId int64, bot *tgbotapi.BotAPI, scheduler *gocron.Scheduler, message string, env config.OurDiary) (tgbotapi.MessageConfig, error) {
+func Steps(chatId int64, bot *tgbotapi.BotAPI, message string, env config.OurDiary) (tgbotapi.MessageConfig, error) {
 	var msg tgbotapi.MessageConfig
 	client, err := GetClient(chatId)
 
@@ -76,15 +79,6 @@ func Steps(chatId int64, bot *tgbotapi.BotAPI, scheduler *gocron.Scheduler, mess
 		}
 
 	case WORKING:
-
-		// schedulerTask := func(title string, lessonStartTime string, room string) error {
-		// 	schedulerMessage := tgbotapi.NewMessage(chatId, title+" начнётся в "+lessonStartTime+" в "+room)
-		// 	if err := SendToUser(bot, schedulerMessage); err != nil {
-		// 		return err
-		// 	}
-		// 	return nil
-		// }
-
 		switch message {
 		case "Обновить расписание":
 			if err := notion.UpdateSchedule(client.NotionClient); err != nil {
@@ -109,11 +103,88 @@ func Steps(chatId int64, bot *tgbotapi.BotAPI, scheduler *gocron.Scheduler, mess
 				return tgbotapi.MessageConfig{}, err
 			}
 			msg = tgbotapi.NewMessage(chatId, answer)
-			// case "Уведомлять о предстоящих занятиях":
-			// 	if err := notion.SetScheduleNotifications(client.NotionClient, scheduler, schedulerTask); err != nil {
-			// 		return tgbotapi.MessageConfig{}, err
-			// 	}
-			// 	msg = tgbotapi.NewMessage(chatId, "Уведомления активны")
+		case "Уведомлять о предстоящих занятиях":
+			if client.Scheduler != nil {
+				client.Scheduler = nil
+				msg = tgbotapi.NewMessage(chatId, "Уведомления отключены")
+				break
+			}
+			client.Scheduler = scheduler.CreateSchedule()
+			results, err := notion.SetScheduleNotifications(client.NotionClient)
+			if err != nil {
+				return tgbotapi.MessageConfig{}, err
+			}
+			for i := 0; i < len(results)-1; i++ {
+				for j := 0; j < len(results[i]); j += 2 {
+					if j+2 > len(results[i]) {
+						break
+					}
+					switch i {
+					case 0:
+						_, err := client.Scheduler.Every(1).Monday().At(results[i][j]).Do(func(msg string) error {
+							if err := SendToUser(bot, tgbotapi.NewMessage(chatId, msg)); err != nil {
+								return err
+							}
+							return nil
+						}, results[i][j+1])
+						if err != nil {
+							return tgbotapi.MessageConfig{}, err
+						}
+					case 1:
+						_, err := client.Scheduler.Every(1).Tuesday().At(results[i][j]).Do(func(msg string) error {
+							if err := SendToUser(bot, tgbotapi.NewMessage(chatId, msg)); err != nil {
+								return err
+							}
+							return nil
+						}, results[i][j+1])
+						if err != nil {
+							return tgbotapi.MessageConfig{}, err
+						}
+					case 2:
+						_, err := client.Scheduler.Every(1).Wednesday().At(results[i][j]).Do(func(msg string) error {
+							if err := SendToUser(bot, tgbotapi.NewMessage(chatId, msg)); err != nil {
+								return err
+							}
+							return nil
+						}, results[i][j+1])
+						if err != nil {
+							return tgbotapi.MessageConfig{}, err
+						}
+					case 3:
+						_, err := client.Scheduler.Every(1).Thursday().At(results[i][j]).Do(func(msg string) error {
+							if err := SendToUser(bot, tgbotapi.NewMessage(chatId, msg)); err != nil {
+								return err
+							}
+							return nil
+						}, results[i][j+1])
+						if err != nil {
+							return tgbotapi.MessageConfig{}, err
+						}
+					case 4:
+						_, err := client.Scheduler.Every(1).Friday().At(results[i][j]).Do(func(msg string) error {
+							if err := SendToUser(bot, tgbotapi.NewMessage(chatId, msg)); err != nil {
+								return err
+							}
+							return nil
+						}, results[i][j+1])
+						if err != nil {
+							return tgbotapi.MessageConfig{}, err
+						}
+					case 5:
+						_, err := client.Scheduler.Every(1).Saturday().At(results[i][j]).Do(func(msg string) error {
+							if err := SendToUser(bot, tgbotapi.NewMessage(chatId, msg)); err != nil {
+								return err
+							}
+							return nil
+						}, results[i][j+1])
+						if err != nil {
+							return tgbotapi.MessageConfig{}, err
+						}
+					}
+				}
+			}
+			client.Scheduler.StartAsync()
+			msg = tgbotapi.NewMessage(chatId, "Уведомления активны")
 		default:
 			msg = tgbotapi.NewMessage(chatId, "Выберите из 3 вариантов!")
 		}

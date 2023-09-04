@@ -32,6 +32,7 @@ type Person struct {
 	PageId string `yaml:"page_id"`
 	UserId string `yaml:"user_id"`
 	Email  string `yaml:"email"`
+	Enter  string `yaml:"enter"`
 }
 
 func init() {
